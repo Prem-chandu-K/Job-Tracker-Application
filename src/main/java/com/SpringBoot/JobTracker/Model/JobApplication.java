@@ -14,6 +14,29 @@ public class JobApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Override
+	public String toString() {
+		return "JobApplication [id=" + id + ", user=" + user + ", companyName=" + companyName + ", position=" + position
+				+ ", appliedDate=" + appliedDate + ", status=" + status + ", interviewDate=" + interviewDate
+				+ ", notes=" + notes + ", getUser()=" + getUser() + ", getId()=" + getId() + ", getCompanyName()="
+				+ getCompanyName() + ", getPosition()=" + getPosition() + ", getAppliedDate()=" + getAppliedDate()
+				+ ", getStatus()=" + getStatus() + ", getInterviewDate()=" + getInterviewDate() + ", getNotes()="
+				+ getNotes() + ", getClass()=" + getClass() + ", hashCode()=" + hashCode() + ", toString()="
+				+ super.toString() + "]";
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
     @Column(nullable = false)
     private String companyName;
 

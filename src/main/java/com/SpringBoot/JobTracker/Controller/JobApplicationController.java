@@ -1,5 +1,6 @@
 package com.SpringBoot.JobTracker.Controller;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -9,19 +10,23 @@ import org.springframework.web.bind.annotation.*;
 
 import com.SpringBoot.JobTracker.Enums.JobStatus;
 import com.SpringBoot.JobTracker.Model.JobApplication;
+import com.SpringBoot.JobTracker.Model.User;
 import com.SpringBoot.JobTracker.Repository.JobApplicationRepository;
+import com.SpringBoot.JobTracker.Repository.UserRepository;
 
 @Controller
 @RequestMapping("/jobs")
 public class JobApplicationController {
 
-    private final JobApplicationRepository repository;
+    private final JobApplicationRepository jobRepo;
+    private final UserRepository userRepo;
 
-    public JobApplicationController(JobApplicationRepository repository) {
-        this.repository = repository;
+    public JobApplicationController(JobApplicationRepository jobRepo, UserRepository userRepo) {
+        this.jobRepo = jobRepo;
+        this.userRepo = userRepo;
     }
 
-    // Show add job form
+    // 👉 Show Add Form
     @GetMapping("/new")
     public String showAddForm(Model model) {
         model.addAttribute("job", new JobApplication());
@@ -29,73 +34,85 @@ public class JobApplicationController {
         return "add-job";
     }
 
+    // 👉 Save Job (USER LINKED 🔐)
     @PostMapping
-    public String saveJob(@ModelAttribute JobApplication job) {
+    public String saveJob(@ModelAttribute JobApplication job, Principal principal) {
 
-        // Set appliedDate to today if not provided
+        String username = principal.getName();
+
+        User user = userRepo.findByUsername(username).orElseThrow();
+
+        job.setUser(user); // 🔥 link job to logged user
+
         if (job.getAppliedDate() == null) {
             job.setAppliedDate(LocalDate.now());
         }
 
-        // Business rule: if INTERVIEW → interview date required
         if (job.getStatus() == JobStatus.INTERVIEW && job.getInterviewDate() == null) {
             job.setInterviewDate(LocalDate.now());
         }
 
-        repository.save(job);
+        jobRepo.save(job); // ✅ FIXED
+
         return "redirect:/jobs";
     }
 
-    // Delete job
+    // 👉 Delete
     @GetMapping("/delete/{id}")
     public String deleteJob(@PathVariable Long id) {
-        repository.deleteById(id);
+        jobRepo.deleteById(id);
         return "redirect:/jobs";
     }
-    
-    //edit job form
+
+    // 👉 Edit Form
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        JobApplication job = repository.findById(id).orElseThrow(() ->
-            new IllegalArgumentException("Invalid Job ID: " + id));
+        JobApplication job = jobRepo.findById(id).orElseThrow();
         model.addAttribute("job", job);
         model.addAttribute("statuses", JobStatus.values());
         return "edit-job";
     }
 
-    //Update job
+    // 👉 Update
     @PostMapping("/update/{id}")
-    public String updateJob(@PathVariable Long id, @ModelAttribute JobApplication job) {
+    public String updateJob(@PathVariable Long id,
+                           @ModelAttribute JobApplication job,
+                           Principal principal) {
+
+        String username = principal.getName();
+        User user = userRepo.findByUsername(username).orElseThrow();
+
+        job.setId(id);
+        job.setUser(user);
 
         if (job.getStatus() == JobStatus.INTERVIEW && job.getInterviewDate() == null) {
             job.setInterviewDate(LocalDate.now());
         }
 
-        job.setId(id);
-        repository.save(job);
+        jobRepo.save(job);
+
         return "redirect:/jobs";
     }
-    
+
+    // 👉 LIST (USER-SPECIFIC 🔥)
     @GetMapping
     public String listJobs(
             @RequestParam(required = false) String company,
             @RequestParam(required = false) JobStatus status,
-            Model model) {
+            Model model,
+            Principal principal) {
 
+        String username = principal.getName();
         List<JobApplication> jobs;
 
         if (company != null && !company.isBlank() && status != null) {
-            jobs = repository
-                .findByCompanyNameContainingIgnoreCaseAndStatus(company, status);
-        } 
-        else if (company != null && !company.isBlank()) {
-            jobs = repository.findByCompanyNameContainingIgnoreCase(company);
-        } 
-        else if (status != null) {
-            jobs = repository.findByStatus(status);
-        } 
-        else {
-            jobs = repository.findAll();
+            jobs = jobRepo.findByUserUsernameAndCompanyNameContainingIgnoreCaseAndStatus(username, company, status);
+        } else if (company != null && !company.isBlank()) {
+            jobs = jobRepo.findByUserUsernameAndCompanyNameContainingIgnoreCase(username, company);
+        } else if (status != null) {
+            jobs = jobRepo.findByUserUsernameAndStatus(username, status);
+        } else {
+            jobs = jobRepo.findByUserUsername(username);
         }
 
         model.addAttribute("jobs", jobs);
@@ -105,8 +122,4 @@ public class JobApplicationController {
 
         return "jobs";
     }
-
-
-
-
 }

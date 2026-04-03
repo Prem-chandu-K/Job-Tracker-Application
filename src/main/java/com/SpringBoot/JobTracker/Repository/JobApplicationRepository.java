@@ -8,11 +8,14 @@ import com.SpringBoot.JobTracker.Enums.JobStatus;
 import com.SpringBoot.JobTracker.Model.JobApplication;
 
 @Repository
-public interface JobApplicationRepository extends JpaRepository<JobApplication, Long>{
-	
-	List<JobApplication> findByCompanyNameContainingIgnoreCase(String companyName);
-	List<JobApplication> findByStatus(JobStatus status);
-	List<JobApplication> findByCompanyNameContainingIgnoreCaseAndStatus(String company, JobStatus status);
+public interface JobApplicationRepository extends JpaRepository<JobApplication, Long> {
 
-	
+    List<JobApplication> findByUserUsername(String username);
+
+    List<JobApplication> findByUserUsernameAndCompanyNameContainingIgnoreCase(String username, String company);
+
+    List<JobApplication> findByUserUsernameAndStatus(String username, JobStatus status);
+
+    List<JobApplication> findByUserUsernameAndCompanyNameContainingIgnoreCaseAndStatus(
+            String username, String company, JobStatus status);
 }
