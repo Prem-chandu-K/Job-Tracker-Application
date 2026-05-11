@@ -275,7 +275,7 @@ http://localhost:8080
 ## 📬 Connect With Me
 
 <p align="center">
-  <a href="https://www.linkedin.com/in/kakarla-prem-chandu-0555a832a" target="_blank">
+  <a href="https://www.linkedin.com/in/kakarla-prem-chandu-0555a832a" target="_blank" rel="noopener noreferrer">
     <img src="https://img.shields.io/badge/LinkedIn-Visit%20Profile-blue?style=for-the-badge&logo=linkedin" />
   </a>
 </p>
